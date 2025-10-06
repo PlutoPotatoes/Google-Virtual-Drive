@@ -1,7 +1,6 @@
 import googlemaps
 import polyline
 import requests
-import time
 import os
 import haversine as hs
 from ultralytics import YOLO
@@ -14,17 +13,11 @@ from google.maps import routing_v2
 #import and set-up google maps client 
 with open('secrets.txt') as f:
     API_KEY = f.readline().strip('\n')
-
-print(API_KEY)
 gmaps = googlemaps.Client(API_KEY)
 
 #select start and finish locations using google maps addresses 
 origin = "100 Main St 10th Floor, Los Angeles, CA 90012"
 destination = "4884 Eagle Rock Blvd, Los Angeles, CA 90041"
-#minimum step in meters
-minStep = 20
-directions60FOV = [0,60,120,180,240,300]
-directions90FOV = [0,90,180,240]
 
 
 
@@ -147,37 +140,7 @@ def csv_drive(filename, fov, pitchAngle=0):
                 print(e)
         i+=1
 
-
-
-    
-
-
-
-#drive(origin, destination, minStep)
-#csv_drive("GrandAv.csv", 60, 5)
-
-
-def routesTest():
-    client = routing_v2.RoutesClient(
-        client_options={"api_key" : API_KEY},
-
-        )
-    route_origin = routing_v2.Waypoint(address = origin)
-    route_destination = routing_v2.Waypoint(address = destination)
-    request = routing_v2.ComputeRoutesRequest(
-        origin = route_origin, 
-        destination = route_destination,        
-        )
-    
-    
-    route = client.compute_routes(request= request, metadata=[("x-goog-fieldmask", "routes.polyline.encodedPolyline")])
-    route = route.routes[0]
-    route_polyline = route.polyline.encoded_polyline
-    decoded_polyline = polyline.decode(route_polyline)
-    print(decoded_polyline)
-
-
-def drive_v2(origin, destination, minStep, fov = 90, pitchAngle = 10):
+def drive_route(origin, destination, minStep, fov = 90, pitchAngle = 10):
 
     #find directions and convert to polyline and then longitude, latitude pairs
     client = routing_v2.RoutesClient(
@@ -229,4 +192,6 @@ def drive_v2(origin, destination, minStep, fov = 90, pitchAngle = 10):
                 print(e)
         i+=1
 
-drive_v2(origin, destination, minStep=30, fov = 90)
+#drive(origin, destination, minStep)
+drive_route(origin, destination, minStep=30, fov = 90)
+#csv_drive("GrandAv.csv", 60, 5)

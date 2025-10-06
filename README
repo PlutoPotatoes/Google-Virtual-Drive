@@ -1,5 +1,26 @@
-Drive.py requires the installation of a few packages through or whichever package manager you choose
+Drive.py requires the installation of the following packages based on the implementation needed
 
-For pip run the following line
+Google's Directions API
+-> googlemaps
+-> polyline
 
-"pip install googlemaps polyline requests haversine"
+Google's Routes API
+-> google.maps
+-> polyline
+
+CSV Coordinate Implementation
+-> csv
+
+For all Implementations the following are also required
+-> requests
+-> os
+-> haversine
+-> re
+-> ultralytics
+
+
+Setup:
+1. place any Yolo object detection models you want to run on the extracted images in the models/ folder
+2. For Routes/Directions implementations set the origin and destination. For CSV implementations add the file with coordinates and pass the filename 
+3. place your API Key in a text file titled secrets.txt
+4. uncomment your selected method at the bottom of drive.py and run
