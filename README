@@ -1,0 +1,5 @@
+Drive.py requires the installation of a few packages through or whichever package manager you choose
+
+For pip run the following line
+
+"pip install googlemaps polyline requests haversine"
