@@ -10,14 +10,7 @@ from google.maps import routing_v2
 
  
 
-#import and set-up google maps client 
-with open('secrets.txt') as f:
-    API_KEY = f.readline().strip('\n')
-gmaps = googlemaps.Client(API_KEY)
 
-#select start and finish locations using google maps addresses 
-origin = "100 Main St 10th Floor, Los Angeles, CA 90012"
-destination = "4884 Eagle Rock Blvd, Los Angeles, CA 90041"
 
 
 
@@ -41,54 +34,54 @@ def trim_points_by_distance(points, interval):
 
 
 
-def drive(origin, destination, minStep):
+def drive_directions(origin, destination, API_KEY, minStep = 20):
+    gmaps = googlemaps.Client(API_KEY)
+    #find directions and convert to polyline and then longitude, latitude pairs
+    directions = ""
+    try:
+        directions = gmaps.directions(origin, destination, mode = "driving", avoid='highways')
+    except Exception as e:
+        print(f"Error fetching directions: {e}")
+        exit()
 
-        #find directions and convert to polyline and then longitude, latitude pairs
-        directions = ""
+    if not directions:
+        print("Couldn't find directions")
+        exit()
+
+    route_polyline = directions[0]['overview_polyline']['points']
+    route_points = polyline.decode(route_polyline)
+
+    #prepare images folder
+
+    outputFolder = "images/raw"
+    os.makedirs(outputFolder, exist_ok = True)
+    #max image size is 640x640
+    imageSize = "640x640"
+    fov = 60
+    i=1
+
+    #trim any points that are too close to each other
+    route_points = trim_points_by_distance(route_points, minStep)
+
+
+    #get pictures from the longitude latitude points using streetview api and save them
+    for (log, lat) in enumerate(route_points):
+        point = (log, lat)
+        locationStr = f"{point[1][0]},{point[1][1]}"
+        print(locationStr)
+
+        url = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch=0&key={API_KEY}&scale=2"
         try:
-            directions = gmaps.directions(origin, destination, mode = "driving", avoid='highways')
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            imagePath = os.path.join(outputFolder, f"streetview_frame_{i}.jpg")
+            with open(imagePath, 'wb') as outfile:
+                outfile.write(response.content)
+            for model in os.listdir(os.path.join(os.getcwd(), "models")):
+                detect_and_store(f"images/raw/streetview_frame_{i}.jpg", f"models/{model}")
         except Exception as e:
-            print(f"Error fetching directions: {e}")
-            exit()
-
-        if not directions:
-            print("Couldn't find directions")
-            exit()
-
-        route_polyline = directions[0]['overview_polyline']['points']
-        route_points = polyline.decode(route_polyline)
-
-        #prepare images folder
-
-        outputFolder = "images/raw"
-        os.makedirs(outputFolder, exist_ok = True)
-        #max image size is 640x640
-        imageSize = "640x640"
-        fov = 60
-        i=1
-
-        #trim any points that are too close to each other
-        route_points = trim_points_by_distance(route_points, minStep)
-
-
-        #get pictures from the longitude latitude points using streetview api and save them
-        for (log, lat) in enumerate(route_points):
-            point = (log, lat)
-            locationStr = f"{point[1][0]},{point[1][1]}"
-            print(locationStr)
-
-            url = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch=0&key={API_KEY}&scale=2"
-            try:
-                response = requests.get(url, stream=True)
-                response.raise_for_status()
-                imagePath = os.path.join(outputFolder, f"streetview_frame_{i}.jpg")
-                with open(imagePath, 'wb') as outfile:
-                    outfile.write(response.content)
-                for model in os.listdir(os.path.join(os.getcwd(), "models")):
-                    detect_and_store(f"images/raw/streetview_frame_{i}.jpg", f"models/{model}")
-            except Exception as e:
-                print(e)
-            i+=1
+            print(e)
+        i+=1
 
 
 def detect_and_store(src, modelName):
@@ -106,7 +99,7 @@ def detect_and_store(src, modelName):
         result.save(outputPath)
         
 
-def csv_drive(filename, fov, pitchAngle=0):
+def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0):
     data_list = []
 
     with open(filename, 'r', newline='') as file:
@@ -140,7 +133,7 @@ def csv_drive(filename, fov, pitchAngle=0):
                 print(e)
         i+=1
 
-def drive_route(origin, destination, minStep, fov = 90, pitchAngle = 10):
+def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle = 10):
 
     #find directions and convert to polyline and then longitude, latitude pairs
     client = routing_v2.RoutesClient(
@@ -192,6 +185,3 @@ def drive_route(origin, destination, minStep, fov = 90, pitchAngle = 10):
                 print(e)
         i+=1
 
-#drive(origin, destination, minStep)
-drive_route(origin, destination, minStep=30, fov = 90)
-#csv_drive("GrandAv.csv", 60, 5)
