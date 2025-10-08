@@ -1,0 +1,24 @@
+{
+  "SignName": "Hourly Parking Sign",
+  "ImageURL": "https://maps.googleapis.com/maps/api/streetview?size=640x640&location=34.05203540953192,-118.2435632137986&fov=60&pitch=10&key=AIzaSyCnX1nr6ffUNtkh-CNaZPN2Yk6Zse6E3sc&heading=0&scale=2&radius=10",
+  "Location": "34.05203540953192,-118.2435632137986",
+  "Confidence": 0.8516312837600708
+},
+{
+  "SignName": "6000lb Weight Limit Sign",
+  "ImageURL": "https://maps.googleapis.com/maps/api/streetview?size=640x640&location=34.05543403318315,-118.2404560606843&fov=60&pitch=10&key=AIzaSyCnX1nr6ffUNtkh-CNaZPN2Yk6Zse6E3sc&heading=60&scale=2&radius=10",
+  "Location": "34.05543403318315,-118.2404560606843",
+  "Confidence": 0.838280200958252
+},
+{
+  "SignName": "Do Not Enter Sign",
+  "ImageURL": "https://maps.googleapis.com/maps/api/streetview?size=640x640&location=34.05903844298562,-118.2369674731817&fov=60&pitch=10&key=AIzaSyCnX1nr6ffUNtkh-CNaZPN2Yk6Zse6E3sc&heading=240&scale=2&radius=10",
+  "Location": "34.05903844298562,-118.2369674731817",
+  "Confidence": 0.8668730854988098
+},
+{
+  "SignName": "Do Not Enter Sign",
+  "ImageURL": "https://maps.googleapis.com/maps/api/streetview?size=640x640&location=34.05903844298562,-118.2369674731817&fov=60&pitch=10&key=AIzaSyCnX1nr6ffUNtkh-CNaZPN2Yk6Zse6E3sc&heading=300&scale=2&radius=10",
+  "Location": "34.05903844298562,-118.2369674731817",
+  "Confidence": 0.8691635727882385
+},

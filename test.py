@@ -7,7 +7,11 @@ with open('secrets.txt') as f:
 origin = "100 Main St 10th Floor, Los Angeles, CA 90012"
 destination = "4884 Eagle Rock Blvd, Los Angeles, CA 90041"
 
-
+#Use Directions API
 #drive.drive_directions(origin, destination, API_KEY)
-#drive.drive_route(origin, destination, API_KEY, minStep=30, fov = 90)
-drive.csv_drive("GrandAv.csv", API_KEY, pitchAngle=5)
+
+#Use Routes API
+drive.drive_route(origin, destination, API_KEY, minStep=30, fov = 90)
+
+#Use CSV Coordinates
+#drive.csv_drive("GrandAv.csv", API_KEY, pitchAngle=5)

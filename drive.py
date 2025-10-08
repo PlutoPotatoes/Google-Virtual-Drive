@@ -7,6 +7,8 @@ from ultralytics import YOLO
 import re
 import csv
 from google.maps import routing_v2
+import json
+import base64
 
  
 
@@ -68,7 +70,14 @@ def drive_directions(origin, destination, API_KEY, minStep = 20):
     for (log, lat) in enumerate(route_points):
         point = (log, lat)
         locationStr = f"{point[1][0]},{point[1][1]}"
-        print(locationStr)
+        url = f"https://maps.googleapis.com/maps/api/streetview/metadata?location={locationStr}&key={API_KEY}"
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            details = json.loads(response.content)
+            locationStr = f"{details["location"]["lat"]},{details["location"]["lng"]}"
+        except Exception as e:
+            print(e)       
 
         url = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch=0&key={API_KEY}&scale=2"
         try:
@@ -78,26 +87,43 @@ def drive_directions(origin, destination, API_KEY, minStep = 20):
             with open(imagePath, 'wb') as outfile:
                 outfile.write(response.content)
             for model in os.listdir(os.path.join(os.getcwd(), "models")):
-                detect_and_store(f"images/raw/streetview_frame_{i}.jpg", f"models/{model}")
+                found = detect_and_store(f"images/raw/streetview_frame_{i}.jpg", f"models/{model}")
+                for sign, conf in found:
+                        addToTable('tableData.json', sign, locationStr, url, conf)
         except Exception as e:
             print(e)
         i+=1
 
 
-def detect_and_store(src, modelName):
+def detect_and_store(src, modelName, locationStr = None):
     model = YOLO(modelName)
     results = model.predict(source=src, conf=0.25)
     result = results[0]
-
+    highConfSigns = []
     for box in result.boxes:
         signName = result.names[int(box.cls)]
         path = os.path.join(os.getcwd(), f"images/{signName}_Low_Confidence")
         if box.conf.item() >= 0.8:
             path = os.path.join(os.getcwd(), f"images/{signName}_High_Confidence")
+            highConfSigns.append([signName, box.conf.item()])
+            saveToTable = True
         os.makedirs(path, exist_ok = True)
         outputPath = f"{path}/{re.findall(r'streetview_frame_\d+_heading_\d+', src)[0]}.jpg"
         result.save(outputPath)
+    return highConfSigns
+            
         
+def addToTable(filename, signName, location, url, confidence):
+
+    item = {
+    'SignName' : signName,
+    'ImageURL' : url,
+    'Location' : location,
+    'Confidence' : confidence
+    }
+    with open(filename, "a") as f:
+        json.dump(item, f, indent=2)
+        f.write(',\n')
 
 def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0):
     data_list = []
@@ -117,7 +143,14 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0):
     #get pictures from the longitude latitude points using streetview api and save them
     for (log, lat) in data_list:
         locationStr = f"{lat},{log}"
-        print(locationStr)
+        url = f"https://maps.googleapis.com/maps/api/streetview/metadata?location={locationStr}&key={API_KEY}"
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            details = json.loads(response.content)
+            locationStr = f"{details["location"]["lat"]},{details["location"]["lng"]}"
+        except Exception as e:
+            print(e)        
 
         for headingMult in range(360//fov):
             url = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key={API_KEY}&heading={fov*headingMult}&scale=2&radius=10"
@@ -128,7 +161,9 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0):
                 with open(imagePath, 'wb') as outfile:
                     outfile.write(response.content)
                 for model in os.listdir(os.path.join(os.getcwd(), "models")):
-                    detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}")
+                    found = detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}", locationStr)
+                    for sign, conf in found:
+                        addToTable('tableData.json', sign, locationStr, url, conf)
             except Exception as e:
                 print(e)
         i+=1
@@ -169,7 +204,14 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
     #get pictures from the longitude latitude points using streetview api and save them
     for (log, lat) in route_points:
         locationStr = f"{log},{lat}"
-        print(locationStr)
+        url = f"https://maps.googleapis.com/maps/api/streetview/metadata?location={locationStr}&key={API_KEY}"
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            details = json.loads(response.content)
+            locationStr = f"{details["location"]["lat"]},{details["location"]["lng"]}"
+        except Exception as e:
+            print(e)       
 
         for headingMult in range(360//fov):
             url = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key={API_KEY}&heading={fov*headingMult}&scale=2&radius=10"
@@ -180,7 +222,9 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
                 with open(imagePath, 'wb') as outfile:
                     outfile.write(response.content)
                 for model in os.listdir(os.path.join(os.getcwd(), "models")):
-                    detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}")
+                    found = detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}")
+                    for sign, conf in found:
+                        addToTable('tableData.json', sign, locationStr, url, conf)
             except Exception as e:
                 print(e)
         i+=1
