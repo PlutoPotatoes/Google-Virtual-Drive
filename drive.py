@@ -36,7 +36,7 @@ def trim_points_by_distance(points, interval):
 
 
 
-def drive_directions(origin, destination, API_KEY, minStep = 20):
+def drive_directions(origin, destination, API_KEY, minStep = 20, pitchAngle = 0):
     gmaps = googlemaps.Client(API_KEY)
     #find directions and convert to polyline and then longitude, latitude pairs
     directions = ""
@@ -89,7 +89,8 @@ def drive_directions(origin, destination, API_KEY, minStep = 20):
             for model in os.listdir(os.path.join(os.getcwd(), "models")):
                 found = detect_and_store(f"images/raw/streetview_frame_{i}.jpg", f"models/{model}")
                 for sign, conf in found:
-                        addToTable('tableData.json', sign, locationStr, url, conf)
+                    strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&scale=2&radius=10"
+                    addToTable('tableData.json', sign, locationStr, strippedurl, conf)        
         except Exception as e:
             print(e)
         i+=1
@@ -163,7 +164,8 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0):
                 for model in os.listdir(os.path.join(os.getcwd(), "models")):
                     found = detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}", locationStr)
                     for sign, conf in found:
-                        addToTable('tableData.json', sign, locationStr, url, conf)
+                        strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
+                        addToTable('tableData.json', sign, locationStr, strippedurl, conf)
             except Exception as e:
                 print(e)
         i+=1
@@ -224,7 +226,8 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
                 for model in os.listdir(os.path.join(os.getcwd(), "models")):
                     found = detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}")
                     for sign, conf in found:
-                        addToTable('tableData.json', sign, locationStr, url, conf)
+                        strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
+                        addToTable('tableData.json', sign, locationStr, strippedurl, conf)
             except Exception as e:
                 print(e)
         i+=1
