@@ -177,7 +177,7 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
                     found = detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}", locationStr)
                     if(datafile != None):   
                         for sign, conf in found:
-                            strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
+                            strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10&source=outoor"
                             addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, conf)
             except Exception as e:
                 print(e)
