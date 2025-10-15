@@ -13,7 +13,7 @@ Google's Routes API
 -> polyline
 
 CSV Coordinate Implementation
--> csv
+-> n/a
 
 For all Implementations the following are also required
 -> requests
@@ -21,8 +21,9 @@ For all Implementations the following are also required
 -> haversine
 -> re
 -> ultralytics
+-> csv
 
-
+    
 Setup:
 1. place any Yolo object detection models you want to run on the extracted images in the models folder
 2. For Routes/Directions implementations set the origin and destination. For CSV implementations add the file with coordinates and pass the filename 
