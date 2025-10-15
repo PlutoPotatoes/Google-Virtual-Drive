@@ -1,4 +1,5 @@
 This repository combines Google's Static Streetview API with either Directions API, Routes API, or CSV Coordinate files to allow easy generation of machine learning training data.
+
 It also allows for this training data to be automatically passed through YOLO object recognition models and categorized based on detected objects and confidence levels.
 
 Drive.py requires the installation of the following packages based on the implementation needed
@@ -23,7 +24,7 @@ For all Implementations the following are also required
 
 
 Setup:
-1. place any Yolo object detection models you want to run on the extracted images in the models/ folder
+1. place any Yolo object detection models you want to run on the extracted images in the models folder
 2. For Routes/Directions implementations set the origin and destination. For CSV implementations add the file with coordinates and pass the filename 
 3. place your API Key in a text file titled secrets.txt
 4. uncomment your selected method at the bottom of drive.py and run

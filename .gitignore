@@ -2,4 +2,6 @@ secrets.txt
 **/__pycache__/
 /bin
 /images
+/tables
 *.csv
+/obj

@@ -36,7 +36,7 @@ def trim_points_by_distance(points, interval):
 
 
 
-def drive_directions(origin, destination, API_KEY, minStep = 20, pitchAngle = 0):
+def drive_directions(origin, destination, API_KEY, minStep = 20, pitchAngle = 0, datafile = None):
     gmaps = googlemaps.Client(API_KEY)
     #find directions and convert to polyline and then longitude, latitude pairs
     directions = ""
@@ -88,9 +88,10 @@ def drive_directions(origin, destination, API_KEY, minStep = 20, pitchAngle = 0)
                 outfile.write(response.content)
             for model in os.listdir(os.path.join(os.getcwd(), "models")):
                 found = detect_and_store(f"images/raw/streetview_frame_{i}.jpg", f"models/{model}")
-                for sign, conf in found:
-                    strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&scale=2&radius=10"
-                    addToTable('tableData.json', sign, locationStr, strippedurl, conf)        
+                if(datafile != None):   
+                    for sign, conf in found:
+                        strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch=0&key=####&scale=2"
+                        addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, conf)    
         except Exception as e:
             print(e)
         i+=1
@@ -115,19 +116,30 @@ def detect_and_store(src, modelName, locationStr = None):
             
         
 def addToTable(filename, signName, location, url, confidence):
-
     item = {
     'SignName' : signName,
     'ImageURL' : url,
     'Location' : location,
     'Confidence' : confidence
     }
-    with open(filename, "a") as f:
-        json.dump(item, f, indent=2)
-        f.write(',\n')
+    fields = ['SignName', 'ImageURL', 'Location', 'Confidence']
+    if(os.path.exists(filename)):
+        with open(file = filename, mode = "a", newline='') as f:
+            writer = csv.DictWriter(f, fieldnames = fields)
+            writer.writerow(item)
 
-def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0):
+    else:
+        with open(file = filename, mode = "x", newline='') as f:
+            writer = csv.DictWriter(f, fieldnames = fields)
+            writer.writeheader()
+            writer.writerow(item)
+
+
+def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
     data_list = []
+    if(datafile != None):
+        os.makedirs(f'tables', exist_ok = True)
+
 
     with open(filename, 'r', newline='') as file:
         csv_reader = csv.reader(file)
@@ -163,14 +175,17 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0):
                     outfile.write(response.content)
                 for model in os.listdir(os.path.join(os.getcwd(), "models")):
                     found = detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}", locationStr)
-                    for sign, conf in found:
-                        strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
-                        addToTable('tableData.json', sign, locationStr, strippedurl, conf)
+                    if(datafile != None):   
+                        for sign, conf in found:
+                            strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
+                            addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, conf)
             except Exception as e:
                 print(e)
         i+=1
 
-def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle = 10):
+def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle = 10, datafile = None):
+    if(datafile != None):
+        os.makedirs(f'tables', exist_ok = True)
 
     #find directions and convert to polyline and then longitude, latitude pairs
     client = routing_v2.RoutesClient(
@@ -225,9 +240,10 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
                     outfile.write(response.content)
                 for model in os.listdir(os.path.join(os.getcwd(), "models")):
                     found = detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}")
-                    for sign, conf in found:
-                        strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
-                        addToTable('tableData.json', sign, locationStr, strippedurl, conf)
+                    if(datafile != None):   
+                        for sign, conf in found:
+                            strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
+                            addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, conf)
             except Exception as e:
                 print(e)
         i+=1
