@@ -118,14 +118,15 @@ def detect_and_store(src, modelName, locationStr = None):
     return highConfSigns
             
         
-def addToTable(filename, signName, location, url, confidence):
+def addToTable(filename, signName, location, url, heading, confidence):
     item = {
     'SignName' : signName,
     'ImageURL' : url,
     'Location' : location,
+    'Heading': heading,
     'Confidence' : confidence
     }
-    fields = ['SignName', 'ImageURL', 'Location', 'Confidence']
+    fields = ['SignName', 'ImageURL', 'Location', 'Heading', 'Confidence']
     if(os.path.exists(filename)):
         with open(file = filename, mode = "a", newline='') as f:
             writer = csv.DictWriter(f, fieldnames = fields)
@@ -181,7 +182,7 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
                     if(datafile != None):   
                         for sign, conf in found:
                             strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10&source=outdoor"
-                            addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, conf)
+                            addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, fov*headingMult, conf)
             except Exception as e:
                 print(e)
         i+=1
@@ -246,7 +247,7 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
                     if(datafile != None):   
                         for sign, conf in found:
                             strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
-                            addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, conf)
+                            addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, fov*headingMult, conf)
             except Exception as e:
                 print(e)
         i+=1

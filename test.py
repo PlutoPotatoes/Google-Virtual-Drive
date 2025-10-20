@@ -11,7 +11,7 @@ destination = "4884 Eagle Rock Blvd, Los Angeles, CA 90041"
 #drive.drive_directions(origin, destination, API_KEY, datafile='drive1.csv')
 
 #Use Routes API
-#drive.drive_route(origin, destination, API_KEY, minStep=30, fov = 90, datafile='drive1.csv')
+#drive.drive_route(origin, destination, API_KEY, minStep=30, fov = 90, datafile='drive2.csv')
 
 #Use CSV Coordinates
 drive.csv_drive("GrandAv.csv", API_KEY, pitchAngle=5, fov=90, datafile='drive1.csv')
