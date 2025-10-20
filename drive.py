@@ -102,16 +102,19 @@ def detect_and_store(src, modelName, locationStr = None):
     results = model.predict(source=src, conf=0.25)
     result = results[0]
     highConfSigns = []
+    signTypes = []
     for box in result.boxes:
         signName = result.names[int(box.cls)]
-        path = os.path.join(os.getcwd(), f"images/{signName}_Low_Confidence")
-        if box.conf.item() >= 0.8:
-            path = os.path.join(os.getcwd(), f"images/{signName}_High_Confidence")
-            highConfSigns.append([signName, box.conf.item()])
-            saveToTable = True
-        os.makedirs(path, exist_ok = True)
-        outputPath = f"{path}/{re.findall(r'streetview_frame_\d+_heading_\d+', src)[0]}.jpg"
-        result.save(outputPath)
+        if signName not in signTypes:
+            signTypes.append(signName)
+            #path = os.path.join(os.getcwd(), f"images/{signName}_Low_Confidence")
+            if box.conf.item() >= 0.8:
+                path = os.path.join(os.getcwd(), f"images/{signName}_High_Confidence")
+                os.makedirs(path, exist_ok = True)
+                outputPath = f"{path}/{re.findall(r'streetview_frame_\d+_heading_\d+', src)[0]}.jpg"
+                result.save(outputPath)
+                highConfSigns.append([signName, box.conf.item()])
+            #result.save(outputPath)
     return highConfSigns
             
         
