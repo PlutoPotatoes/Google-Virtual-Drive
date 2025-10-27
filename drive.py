@@ -9,7 +9,10 @@ import csv
 from google.maps import routing_v2
 import json
 import base64
-
+from transformers import pipeline
+from PIL import Image
+import KrylovHelper as K
+from math import sin, cos, radians
  
 
 
@@ -89,7 +92,7 @@ def drive_directions(origin, destination, API_KEY, minStep = 20, pitchAngle = 0,
             for model in os.listdir(os.path.join(os.getcwd(), "models")):
                 found = detect_and_store(f"images/raw/streetview_frame_{i}.jpg", f"models/{model}")
                 if(datafile != None):   
-                    for sign, conf in found:
+                    for sign, conf, shape in found:
                         strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch=0&key=####&scale=2"
                         addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, conf)    
         except Exception as e:
@@ -113,7 +116,7 @@ def detect_and_store(src, modelName, locationStr = None):
                 os.makedirs(path, exist_ok = True)
                 outputPath = f"{path}/{re.findall(r'streetview_frame_\d+_heading_\d+', src)[0]}.jpg"
                 result.save(outputPath)
-                highConfSigns.append([signName, box.conf.item()])
+                highConfSigns.append([signName, box.conf.item(), box.xyxy.tolist()[0]])
             #result.save(outputPath)
     return highConfSigns
             
@@ -180,7 +183,7 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
                 for model in os.listdir(os.path.join(os.getcwd(), "models")):
                     found = detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}", locationStr)
                     if(datafile != None):   
-                        for sign, conf in found:
+                        for sign, conf, shape in found:
                             strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10&source=outdoor"
                             addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, fov*headingMult, conf)
             except Exception as e:
@@ -188,6 +191,7 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
         i+=1
 
 def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle = 10, datafile = None):
+
     if(datafile != None):
         os.makedirs(f'tables', exist_ok = True)
 
@@ -215,11 +219,13 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
     os.makedirs(outputFolder, exist_ok = True)
     #max image size is 640x640
     imageSize = "640x640"
-    fov = 60
     i=1
 
     #trim any points that are too close to each other
     route_points = trim_points_by_distance(route_points, minStep)
+
+    #load Depth Anything v2 Model
+    depthModel = pipeline(task="depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf")
 
 
     #get pictures from the longitude latitude points using streetview api and save them
@@ -245,10 +251,40 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
                 for model in os.listdir(os.path.join(os.getcwd(), "models")):
                     found = detect_and_store(f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg", f"models/{model}")
                     if(datafile != None):   
-                        for sign, conf in found:
+                        for sign, conf, shape in found:
                             strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
-                            addToTable(f'tables/{datafile}', sign, locationStr, strippedurl, fov*headingMult, conf)
+                            depth = get_detection_depth(depthModel, imagePath, shape, (lat, log), fov*headingMult)
+                            updatedLoc = adjustCoords(lat, log, headingMult*fov, depth)
+                            addToTable(f'tables/{datafile}', sign, updatedLoc, strippedurl, fov*headingMult, conf)
             except Exception as e:
                 print(e)
         i+=1
 
+def get_detection_depth(model, src, boxCoords, StartLocation, heading):
+    rawSrc = newSrc = src[0:len(src)-3] + "_raw_depth.jpg" 
+
+    boxCoords = [int(i) for i in boxCoords]
+    with Image.open(src) as image:
+        depth = model(image)['predicted_depth']
+        depthImg = model(image)['depth']
+        depthImg.save(rawSrc)
+    sum = 0
+    x1, y1, x2, y2 = boxCoords
+    for row in depth[y1:y2]:
+        for pixel in row[x1:x2]:
+            sum += pixel
+    avg_depth = sum/((x2-x1)*(y2-y1))
+    return avg_depth.item()
+
+
+def adjustCoords(lat, lon, bearing, depth):
+    print("------")
+    mx, my = K.LatLonToMeters(lat,lon)
+    br1 = radians(bearing)
+    yCP = my + depth * cos(br1) * 640/256	# depth-based positions
+    xCP = mx + depth * sin(br1) * 640/256
+    latp, lonp = K.MetersToLatLon(xCP, yCP)
+    yCP = my + 1.0 * cos(br1) * 640/256	# normalized positions (at 1m distance from camera)
+    xCP = mx + 1.0 * sin(br1) * 640/256
+    latp1, lonp1 = K.MetersToLatLon(xCP, yCP)
+    return f"{latp1},{lonp1}"
