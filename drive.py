@@ -11,8 +11,7 @@ import json
 import base64
 from transformers import pipeline
 from PIL import Image
-import KrylovHelper as K
-from math import sin, cos, radians
+from pyproj import Geod
  
 
 
@@ -26,12 +25,10 @@ def trim_points_by_distance(points, interval):
     for i in range(1, len(points)-1):
         lat1, long1 = trimmedPoints[len(trimmedPoints)-1]
         lat2, long2 = points[i]
-        print(f"{lat1} {long1}")
-        print(f"{lat2} {long2}")
+
 
 
         dist = hs.haversine((lat1, long1), (lat2, long2), hs.Unit.METERS, normalize = True)
-        print(dist)
         if(dist > interval):
             trimmedPoints.append(points[i])
 
@@ -237,6 +234,8 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
             response.raise_for_status()
             details = json.loads(response.content)
             locationStr = f"{details["location"]["lat"]},{details["location"]["lng"]}"
+            log = details["location"]["lng"]
+            lat = details["location"]["lat"]
         except Exception as e:
             print(e)       
 
@@ -278,13 +277,6 @@ def get_detection_depth(model, src, boxCoords, StartLocation, heading):
 
 
 def adjustCoords(lat, lon, bearing, depth):
-    print("------")
-    mx, my = K.LatLonToMeters(lat,lon)
-    br1 = radians(bearing)
-    yCP = my + depth * cos(br1) * 640/256	# depth-based positions
-    xCP = mx + depth * sin(br1) * 640/256
-    latp, lonp = K.MetersToLatLon(xCP, yCP)
-    yCP = my + 1.0 * cos(br1) * 640/256	# normalized positions (at 1m distance from camera)
-    xCP = mx + 1.0 * sin(br1) * 640/256
-    latp1, lonp1 = K.MetersToLatLon(xCP, yCP)
-    return f"{latp1},{lonp1}"
+    geod = Geod(ellps="clrk66")
+    lon, lat, heading = geod.fwd(lons=lon, lats=lat, az=bearing, dist=depth, return_back_azimuth=False)
+    return f"{lat},{lon}"
