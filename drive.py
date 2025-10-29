@@ -1,14 +1,9 @@
-import googlemaps
 import polyline
 import requests
 import os
-import haversine as hs
-from ultralytics import YOLO
-import re
 import csv
 from google.maps import routing_v2
 import json
-import base64
 from transformers import pipeline
 from helper import addToGISFormatTable, detect_and_store, trim_points_by_distance, get_detection_depth_and_heading, adjustCoords
 
