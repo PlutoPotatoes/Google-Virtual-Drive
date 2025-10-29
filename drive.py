@@ -105,16 +105,19 @@ def detect_and_store(src, modelName, locationStr = None):
     signTypes = []
     for box in result.boxes:
         signName = result.names[int(box.cls)]
-        if signName not in signTypes:
-            signTypes.append(signName)
-            #path = os.path.join(os.getcwd(), f"images/{signName}_Low_Confidence")
-            if box.conf.item() >= 0.8:
+        #path = os.path.join(os.getcwd(), f"images/{signName}_Low_Confidence")
+        if box.conf.item() >= 0.8:
+            #track all signs
+            highConfSigns.append([signName, box.conf.item(), box.xyxy.tolist()[0]])
+            #save one image per sign type
+            if signName not in signTypes:
+                signTypes.append(signName)
                 path = os.path.join(os.getcwd(), f"images/{signName}_High_Confidence")
                 os.makedirs(path, exist_ok = True)
                 outputPath = f"{path}/{re.findall(r'streetview_frame_\d+_heading_\d+', src)[0]}.jpg"
                 result.save(outputPath)
-                highConfSigns.append([signName, box.conf.item(), box.xyxy.tolist()[0]])
-            #result.save(outputPath)
+
+        #result.save(outputPath)
     return highConfSigns
             
         
@@ -252,28 +255,34 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
                     if(datafile != None):   
                         for sign, conf, shape in found:
                             strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
-                            depth = get_detection_depth(depthModel, imagePath, shape, (lat, log), fov*headingMult)
-                            updatedLoc = adjustCoords(lat, log, headingMult*fov, depth)
-                            addToTable(f'tables/{datafile}', sign, updatedLoc, strippedurl, fov*headingMult, conf)
+                            depth, newFov = get_detection_depth_and_heading(depthModel, imagePath, shape, fov*headingMult, fov)
+                            updatedLoc = adjustCoords(lat, log, newFov, depth)
+                            addToTable(f'tables/{datafile}', sign, updatedLoc, strippedurl, newFov, conf)
             except Exception as e:
                 print(e)
         i+=1
 
-def get_detection_depth(model, src, boxCoords, StartLocation, heading):
+def get_detection_depth_and_heading(model, src, boxCoords, heading, fov):
     rawSrc = newSrc = src[0:len(src)-3] + "_raw_depth.jpg" 
-
     boxCoords = [int(i) for i in boxCoords]
     with Image.open(src) as image:
         depth = model(image)['predicted_depth']
         depthImg = model(image)['depth']
         depthImg.save(rawSrc)
+    #get depth
     sum = 0
     x1, y1, x2, y2 = boxCoords
     for row in depth[y1:y2]:
         for pixel in row[x1:x2]:
             sum += pixel
     avg_depth = sum/((x2-x1)*(y2-y1))
-    return avg_depth.item()
+    #update heading
+    centerX = depth.size(1)/2
+    boxX = (x1+x2)/2
+    percentOffset = ((centerX - boxX)*-1)/depth.size(1)
+    adjustedFov = fov + (fov*percentOffset)
+    print(adjustedFov)
+    return (avg_depth.item(), adjustedFov)
 
 
 def adjustCoords(lat, lon, bearing, depth):
