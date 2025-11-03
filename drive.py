@@ -113,6 +113,7 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
         use_doc_orientation_classify=False,
         use_doc_unwarping=False,
         use_textline_orientation=False)
+    src = ''
 
 
     #get pictures from the longitude latitude points using streetview api and save them
@@ -163,11 +164,20 @@ def ocr(boxCoords, signName, src, crop_path, ocr):
     crop_img = cv2.imread(src)[int(y1):int(y2), int(x1):int(x2)]
     # Save cropped image
     cv2.imwrite(crop_path, crop_img)
-    text_prediction = ocr.predict(src)
+    text_prediction = ocr.predict(crop_path)
+    words = []
     for res in text_prediction: 
-        res.print()
-
-    #text match minimum step is new sign type
-
+        res.save_to_json("images/temp/jsons/sign_name_data.json")
+        with open("images/temp/jsons/sign_name_data.json", 'r', encoding='cp850') as f:
+            j = json.load(f)
+        #it may be worth pairing words with their confidence level
+        [words.append(i) for i in j['rec_texts']]
+    print(words)
+    '''
+    Need a dict of dicts holding all sign subsets and their keywords to check words for
+    the one with the most matches is the class? ig?
+    '''
+    #os.remove("images/temp/jsons/sign_name_data.json")
     #os.remove(crop_path)
+    
     return newSignType
