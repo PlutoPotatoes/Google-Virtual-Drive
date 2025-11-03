@@ -6,6 +6,11 @@ from google.maps import routing_v2
 import json
 from transformers import pipeline
 from helper import addToGISFormatTable, detect_and_store, trim_points_by_distance, get_detection_depth_and_heading, adjustCoords
+import cv2
+from paddleocr import PaddleOCR
+
+ocrSigns = ["Street Cleaning"]
+
 
 def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
     data_list = []
@@ -89,7 +94,10 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
     #prepare images folder
 
     outputFolder = "images/raw"
+    croppedImageFolder = "images/temp/cropped"
     os.makedirs(outputFolder, exist_ok = True)
+    os.makedirs(croppedImageFolder, exist_ok=True)
+
     #max image size is 640x640
     imageSize = "640x640"
     i=1
@@ -99,6 +107,12 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
 
     #load Depth Anything v2 Model
     depthModel = pipeline(task="depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf")
+
+    #load paddleOCR model
+    ocrModel = PaddleOCR(
+        use_doc_orientation_classify=False,
+        use_doc_unwarping=False,
+        use_textline_orientation=False)
 
 
     #get pictures from the longitude latitude points using streetview api and save them
@@ -132,8 +146,28 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
                             strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
                             depth, newHeading = get_detection_depth_and_heading(depthModel, imagePath, shape, fov*headingMult, fov)
                             lat, lon = adjustCoords(lat, log, newHeading, depth)
+                            #if sign not in ocrSigns:
+                            sign = ocr(shape, sign, f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg",
+                                        f"images/temp/cropped/crop_frame_{i}_heading_{fov*headingMult}_sign_{sign}.jpg", ocrModel)
                             addToGISFormatTable(datafile, sign, lat, lon, newHeading)
             except Exception as e:
                 print(e)
         i+=1
 
+
+
+
+def ocr(boxCoords, signName, src, crop_path, ocr):
+    newSignType = signName
+    x1, y1, x2, y2 = boxCoords
+    crop_img = cv2.imread(src)[int(y1):int(y2), int(x1):int(x2)]
+    # Save cropped image
+    cv2.imwrite(crop_path, crop_img)
+    text_prediction = ocr.predict(src)
+    for res in text_prediction: 
+        res.print()
+
+    #text match minimum step is new sign type
+
+    #os.remove(crop_path)
+    return newSignType
