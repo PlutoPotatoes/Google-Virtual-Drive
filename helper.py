@@ -5,6 +5,8 @@ import csv
 import haversine as hs
 from PIL import Image
 from pyproj import Geod
+import json
+import cv2
 
 
 def detect_and_store(src, modelName, locationStr = None):
@@ -139,3 +141,35 @@ def adjustCoords(lat, lon, bearing, depth):
     geod = Geod(ellps="clrk66")
     lon, lat, heading = geod.fwd(lons=lon, lats=lat, az=bearing, dist=depth, return_back_azimuth=False)
     return lat, lon
+
+
+def ocr(boxCoords, signName, src, crop_path, ocr):
+    newSignType = signName
+    x1, y1, x2, y2 = boxCoords
+    crop_img = cv2.imread(src)[int(y1):int(y2), int(x1):int(x2)]
+    # Save cropped image
+    cv2.imwrite(crop_path, crop_img)
+    text_prediction = ocr.predict(crop_path)
+    words = []
+    for res in text_prediction: 
+        res.save_to_json("images/temp/jsons/sign_name_data.json")
+        with open("images/temp/jsons/sign_name_data.json", 'r', encoding='cp850') as f:
+            j = json.load(f)
+        #it may be worth pairing words with their confidence level
+        [words.append(i) for i in j['rec_texts']]
+    newSignType = specifySigns(signName, words)
+    os.remove("images/temp/jsons/sign_name_data.json")
+    os.remove(crop_path)
+    
+    return newSignType
+
+
+def specifySigns(baseSign, words):
+    signName = baseSign
+    match(baseSign):
+        case "Tow Away Signs Letters":
+            print("Tow Away of some kind")
+            #try to match all word in words to sign keywords
+        case _:
+            print("unidentified sign")
+    return signName    
