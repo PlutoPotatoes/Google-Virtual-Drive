@@ -7,6 +7,7 @@ from PIL import Image
 from pyproj import Geod
 import json
 import cv2
+from goprostuff import *
 
 
 def detect_and_store(src, modelName, locationStr = None):
@@ -173,3 +174,34 @@ def specifySigns(baseSign, words):
         case _:
             print("unidentified sign")
     return signName    
+
+def GoProProcessing(input_mp4, outdir, interval, interp_gap, nearest_gap):
+
+    print("Output folder:", Path(outdir))
+    frames = extract_frames_every_n_seconds(input_mp4, outdir, interval)
+    print(f"Extracted {len(frames)} frames")
+    exiftool_bin = exiftool_cmd()
+    if not exiftool_bin:
+        print("[WARN] exiftool not found. Frames will be left without GPS EXIF.")
+        samples = []; static_gps = None
+    else:
+        print("Using exiftool:", exiftool_bin)
+        samples    = run_exiftool_timed_gps(input_mp4, exiftool_bin)
+        static_gps = run_exiftool_static_gps(input_mp4, exiftool_bin)
+        print(f"Timed GPS samples: {len(samples)} | Static GPS available: {bool(static_gps)}")
+
+    wrote = 0
+    for jpg_path, ts in frames:
+        latlon = None
+        if samples:
+            latlon = interpolate_gps(ts, samples, per_side_gap=interp_gap) or nearest_gps(ts, samples, max_gap=nearest_gap)
+        if latlon is None and static_gps is not None:
+            latlon = static_gps
+        if latlon:
+            write_gps_exif(jpg_path, latlon[0], latlon[1])
+            wrote += 1
+
+    print(f"GPS EXIF written on {wrote}/{len(frames)} frames.")
+    print("Done. First few files:")
+    for p, _t in frames[:5]:
+        print("  ", p)
