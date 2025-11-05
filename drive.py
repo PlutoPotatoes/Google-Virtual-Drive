@@ -9,7 +9,7 @@ from helper import addToGISFormatTable, detect_and_store, trim_points_by_distanc
 import cv2
 from paddleocr import PaddleOCR
 
-ocrSigns = ["Street Cleaning"]
+ocrSigns = ["Tow Away Signs Letters"]
 
 
 def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
@@ -33,6 +33,12 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
     #load Depth Anything v2 Model
     depthModel = pipeline(task="depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf")
 
+    #load paddleOCR model
+    ocrModel = PaddleOCR(
+        use_doc_orientation_classify=False,
+        use_doc_unwarping=False,
+        use_textline_orientation=False)
+    
     #get pictures from the longitude latitude points using streetview api and save them
     for (log, lat) in data_list:
         locationStr = f"{lat},{log}"
@@ -60,6 +66,9 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
                             strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10&source=outdoor"
                             depth, newHeading = get_detection_depth_and_heading(depthModel, imagePath, shape, fov*headingMult, fov)
                             lat, lon = adjustCoords(lat, log, newHeading, depth)
+                            if sign in ocrSigns:
+                                sign = ocr(shape, sign, f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg",
+                                        f"images/temp/cropped/crop_frame_{i}_heading_{fov*headingMult}_sign_{sign}.jpg", ocrModel)
                             addToGISFormatTable(datafile, sign, lat, lon, newHeading)
             except Exception as e:
                 print(e)
@@ -113,7 +122,6 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
         use_doc_orientation_classify=False,
         use_doc_unwarping=False,
         use_textline_orientation=False)
-    src = ''
 
 
     #get pictures from the longitude latitude points using streetview api and save them
@@ -147,8 +155,8 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
                             strippedurl = f"https://maps.googleapis.com/maps/api/streetview?size={imageSize}&location={locationStr}&fov={fov}&pitch={pitchAngle}&key=#####&heading={fov*headingMult}&scale=2&radius=10"
                             depth, newHeading = get_detection_depth_and_heading(depthModel, imagePath, shape, fov*headingMult, fov)
                             lat, lon = adjustCoords(lat, log, newHeading, depth)
-                            #if sign not in ocrSigns:
-                            sign = ocr(shape, sign, f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg",
+                            if sign in ocrSigns:
+                                sign = ocr(shape, sign, f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg",
                                         f"images/temp/cropped/crop_frame_{i}_heading_{fov*headingMult}_sign_{sign}.jpg", ocrModel)
                             addToGISFormatTable(datafile, sign, lat, lon, newHeading)
             except Exception as e:
@@ -181,3 +189,11 @@ def ocr(boxCoords, signName, src, crop_path, ocr):
     #os.remove(crop_path)
     
     return newSignType
+
+def specifySigns(baseSign, words):
+    match(baseSign):
+        case "Tow Away Signs Letters":
+            print("Tow Away of some kind")
+            #try to match all word in words to sign keywords
+        case _:
+            print("unidentified sign")
