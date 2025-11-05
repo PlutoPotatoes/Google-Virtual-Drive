@@ -16,7 +16,7 @@ destination = "4884 Eagle Rock Blvd, Los Angeles, CA 90041"
 
 input_mp4   = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video/GH010296.MP4"
 outdir      = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video"
-interval    = 5.0      # seconds between frames
+interval    = 1      # seconds between frames
 interp_gap  = 15.0     # per-side seconds for interpolation
 nearest_gap = 10.0     # max seconds for nearest fallback
 

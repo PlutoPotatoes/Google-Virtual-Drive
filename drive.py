@@ -6,7 +6,6 @@ from google.maps import routing_v2
 import json
 from transformers import pipeline
 from helper import *
-import cv2
 from paddleocr import PaddleOCR
 
 ocrSigns = ["Tow Away Signs Letters"]

@@ -7,7 +7,7 @@ from PIL import Image
 from pyproj import Geod
 import json
 import cv2
-from goprostuff import *
+from GoProDataHelper import *
 
 
 def detect_and_store(src, modelName, locationStr = None):

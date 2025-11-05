@@ -13,9 +13,9 @@ import piexif
 # ------------------------ USER SETTINGS (EDIT) ------------------------ #
 #input_mp4   = r"Z:\_Projects\Asset_Recognition\Yolo_Video\Videos from Nick\GH010296.MP4"
 #outdir      = r"Z:\_Projects\Asset_Recognition\Yolo_Video\Videos from Nick\GH010296 3"
-interval    = 5.0      # seconds between frames
-interp_gap  = 15.0     # per-side seconds for interpolation
-nearest_gap = 10.0     # max seconds for nearest fallback
+#interval    = 5.0      # seconds between frames
+#interp_gap  = 15.0     # per-side seconds for interpolation
+#nearest_gap = 10.0     # max seconds for nearest fallback
 EXIFTOOL    = r"C:\Users\410362\AppData\Roaming\Python\Python311\site-packages\piexif"  # set to None if exiftool is on PATH
 # --------------------------------------------------------------------- #
 
