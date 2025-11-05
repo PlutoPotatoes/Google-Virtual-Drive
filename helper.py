@@ -131,6 +131,10 @@ def get_detection_depth_and_heading(model, src, boxCoords, heading, fov):
     return (avg_depth.item(), adjustedFov)
 
 
+
+
+
+
 def adjustCoords(lat, lon, bearing, depth):
     geod = Geod(ellps="clrk66")
     lon, lat, heading = geod.fwd(lons=lon, lats=lat, az=bearing, dist=depth, return_back_azimuth=False)
