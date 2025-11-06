@@ -14,9 +14,9 @@ destination = "4884 Eagle Rock Blvd, Los Angeles, CA 90041"
 #Use CSV Coordinates
 #drive.csv_drive("GrandAv.csv", API_KEY, pitchAngle=5, fov=90, datafile='tables/drive1.csv')
 
-input_mp4   = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video/GH010296.MP4"
+input_mp4   = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video/GX040300.MP4"
 outdir      = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video"
-interval    = 1      # seconds between frames
+interval    = 50      # seconds between frames
 interp_gap  = 15.0     # per-side seconds for interpolation
 nearest_gap = 10.0     # max seconds for nearest fallback
 

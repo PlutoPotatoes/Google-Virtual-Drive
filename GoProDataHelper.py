@@ -16,7 +16,7 @@ import piexif
 #interval    = 5.0      # seconds between frames
 #interp_gap  = 15.0     # per-side seconds for interpolation
 #nearest_gap = 10.0     # max seconds for nearest fallback
-EXIFTOOL    = r"C:\Users\410362\AppData\Roaming\Python\Python311\site-packages\piexif"  # set to None if exiftool is on PATH
+EXIFTOOL    = "exiftool-13.40_64/exiftool.exe"  # set to None if exiftool is on PATH
 # --------------------------------------------------------------------- #
 
 def exiftool_cmd() -> Optional[str]:
@@ -26,6 +26,10 @@ def exiftool_cmd() -> Optional[str]:
     return shutil.which("exiftool")
 
 
+# Use this to grab gps data, regardless of other stuff
+# Map to each image based on time stamp
+# pair and pass to algorithm
+
 # ---------- GPS extraction (GoPro-aware) ----------
 def run_exiftool_timed_gps(mp4_path: str, exiftool_bin: str) -> List[Tuple[float, float, float]]:
     """
@@ -34,21 +38,26 @@ def run_exiftool_timed_gps(mp4_path: str, exiftool_bin: str) -> List[Tuple[float
     """
     cmd = [
         exiftool_bin, "-ee3", "-api", "largefilesupport=1", "-n",
-        "-p", "$SampleTime $GPSLatitude $GPSLongitude $GPSFix",
+        "-p", "$TimeStamp $GPSLatitude $GPSLongitude $Doc1:GPSHPositioningError",
         mp4_path
     ]
+    print("pre statement")
     try:
         out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
     except subprocess.CalledProcessError:
+        print("ERROR OR SMTH")
         return []
     samples: List[Tuple[float, float, float]] = []
+    print("pre loop")
+    print(out)
     for line in out.splitlines():
         parts = line.strip().split()
+        #print(parts)
         if len(parts) >= 4:
             try:
                 t   = float(parts[0]); lat = float(parts[1]); lon = float(parts[2])
                 fix = int(float(parts[3]))  # sometimes "3.00"
-                if not (math.isnan(lat) or math.isnan(lon)) and fix >= 2:
+                if not (math.isnan(lat) or math.isnan(lon)) and fix >= 1:
                     samples.append((t, lat, lon))
             except Exception:
                 pass
