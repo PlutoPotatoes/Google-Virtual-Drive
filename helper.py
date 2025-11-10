@@ -7,7 +7,9 @@ from PIL import Image
 from pyproj import Geod
 import json
 import cv2
-
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from torchmetrics.text import CharErrorRate
 
 def detect_and_store(src, modelName, locationStr = None):
     model = YOLO(modelName)
@@ -132,18 +134,12 @@ def get_detection_depth_and_heading(model, src, boxCoords, heading, fov):
     print(adjustedFov)
     return (avg_depth.item(), adjustedFov)
 
-
-
-
-
-
 def adjustCoords(lat, lon, bearing, depth):
     geod = Geod(ellps="clrk66")
     lon, lat, heading = geod.fwd(lons=lon, lats=lat, az=bearing, dist=depth, return_back_azimuth=False)
     return lat, lon
 
-
-def ocr(boxCoords, signName, src, crop_path, ocr):
+def ocr(boxCoords, signName, src, crop_path, ocr, ocr_candidate_signs):
     newSignType = signName
     x1, y1, x2, y2 = boxCoords
     crop_img = cv2.imread(src)[int(y1):int(y2), int(x1):int(x2)]
@@ -151,19 +147,20 @@ def ocr(boxCoords, signName, src, crop_path, ocr):
     cv2.imwrite(crop_path, crop_img)
     text_prediction = ocr.predict(crop_path)
     words = []
+    # only one result
     for res in text_prediction: 
         res.save_to_json("images/temp/jsons/sign_name_data.json")
         with open("images/temp/jsons/sign_name_data.json", 'r', encoding='cp850') as f:
             j = json.load(f)
-        #it may be worth pairing words with their confidence level
-        [words.append(i) for i in j['rec_texts']]
-    newSignType = specifySigns(signName, words)
+            # it may be worth pairing words with their confidence level
+            words = j['rec_texts']
+    lowest_cer, cers = specifySigns(signName, words, ocr_candidate_signs)
     os.remove("images/temp/jsons/sign_name_data.json")
     os.remove(crop_path)
     
-    return newSignType
+    return lowest_cer
 
-
+'''
 def specifySigns(baseSign, words):
     signName = baseSign
     match(baseSign):
@@ -172,4 +169,41 @@ def specifySigns(baseSign, words):
             #try to match all word in words to sign keywords
         case _:
             print("unidentified sign")
-    return signName    
+    return signName
+'''
+
+def load_excel():
+    # Define the scope of API
+    scope = [
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+    ]
+    # Authenticate with credentials
+    credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    client = gspread.authorize(credentials)
+
+    # Open the Google Sheet
+    MASTER_SHEET_INDEX = 0
+    sheet = client.open('Tracker - Merged Master Sign Catalog ').get_worksheet(MASTER_SHEET_INDEX)
+    return sheet.get_all_records() # return all unique signs in the Google sheet
+
+# have a list of ocr candidate
+def specifySigns(baseSign, words, ocr_candidate_signs):
+    cer = CharErrorRate()
+    cers = {}
+    prediction = " ".join(words)
+    lowest_cer = ""
+    # for each sign type
+    for ocr_candidate_sign in ocr_candidate_signs:
+        if (ocr_candidate_sign["Bounding box name"] == baseSign):
+            ocr_desc = " ".join(ocr_candidate_sign["OCR Desc"].split('\n'))
+            # calculate CER
+            cer_val = cer(prediction, ocr_desc).item() / len(ocr_desc)
+            if (len(cers) == 0 or (lowest_cer != "" and cer_val < cers[lowest_cer])):
+                lowest_cer = ocr_desc
+            cers[ocr_desc] = cer_val
+
+    return lowest_cer, cers
+
+def is_ocr_canditate(unique_sign):
+    return unique_sign["OCR candidate?"] == "y"

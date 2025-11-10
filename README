@@ -9,7 +9,7 @@ Google's Directions API
 -> polyline
 
 Google's Routes API
--> google.maps
+-> google-maps-routing
 -> polyline
 
 CSV Coordinate Implementation
@@ -22,10 +22,20 @@ For all Implementations the following are also required
 -> re
 -> ultralytics
 -> csv
+-> gspread
+-> oauth2client
+-> torchmetrics
 
-    
 Setup:
-1. place any Yolo object detection models you want to run on the extracted images in the models folder
-2. For Routes/Directions implementations set the origin and destination. For CSV implementations add the file with coordinates and pass the filename 
-3. place your API Key in a text file titled secrets.txt
-4. uncomment your selected method at the bottom of drive.py and run
+
+1. Create a virtual Python environment and run `pip install -r requirements.txt` in terminal to install all the libraries/packages this project depends on.
+2. Place any Yolo object detection models you want to run on the extracted images in the models folder
+3. For Routes/Directions implementations set the origin and destination. For CSV implementations add the file with coordinates and pass the filename
+4. Place your API Key in a text file titled `secrets.txt`
+5. Create service account credentials from Google Cloud and save the json keyfile in `credentials.json` for access to Google Sheets
+6. Link Signs Google Sheet with the service account (tutorial: https://spreadsheetpoint.com/connect-python-and-google-sheets-15-minute-guide/)
+7. Uncomment your selected method at the bottom of drive.py and run
+
+Tips:
+
+1. Whenever a new library/package is installed, please type `pip freeze > requirements.txt` to update the list of requirements.

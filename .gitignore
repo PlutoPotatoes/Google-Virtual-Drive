@@ -1,4 +1,7 @@
 secrets.txt
+credentials.json
+*test.json
+.DS_Store
 **/__pycache__/
 /bin
 /images

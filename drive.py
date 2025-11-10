@@ -12,7 +12,7 @@ from paddleocr import PaddleOCR
 ocrSigns = ["Tow Away Signs Letters"]
 
 
-def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
+def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None, ocr_candidate_signs = []):
     data_list = []
     if(datafile != None):
         os.makedirs(f'tables', exist_ok = True)
@@ -68,7 +68,7 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
                             lat, lon = adjustCoords(lat, log, newHeading, depth)
                             if sign in ocrSigns:
                                 sign = ocr(shape, sign, f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg",
-                                        f"images/temp/cropped/crop_frame_{i}_heading_{fov*headingMult}_sign_{sign}.jpg", ocrModel)
+                                        f"images/temp/cropped/crop_frame_{i}_heading_{fov*headingMult}_sign_{sign}.jpg", ocrModel, ocr_candidate_signs)
                             addToGISFormatTable(datafile, sign, lat, lon, newHeading)
             except Exception as e:
                 print(e)
@@ -77,7 +77,7 @@ def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None):
 
 
 
-def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle = 10, datafile = None):
+def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle = 10, datafile = None, ocr_candidate_signs = []):
 
     if(datafile != None):
         os.makedirs(f'tables', exist_ok = True)
@@ -157,7 +157,7 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
                             lat, lon = adjustCoords(lat, log, newHeading, depth)
                             if sign in ocrSigns:
                                 sign = ocr(shape, sign, f"images/raw/streetview_frame_{i}_heading_{fov*headingMult}.jpg",
-                                        f"images/temp/cropped/crop_frame_{i}_heading_{fov*headingMult}_sign_{sign}.jpg", ocrModel)
+                                        f"images/temp/cropped/crop_frame_{i}_heading_{fov*headingMult}_sign_{sign}.jpg", ocrModel, ocr_candidate_signs)
                             addToGISFormatTable(datafile, sign, lat, lon, newHeading)
             except Exception as e:
                 print(e)
