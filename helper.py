@@ -27,7 +27,8 @@ def detect_and_store(src, modelName):
                 signTypes.append(signName)
                 path = os.path.join(os.getcwd(), f"images/{signName}_High_Confidence")
                 os.makedirs(path, exist_ok = True)
-                outputPath = f"{path}/{src}.jpg"
+                outputPath = f"{path}/{os.path.basename(src)}"
+                    #outputPath = f"{path}/{re.findall(r'streetview_frame_\d+_heading_\d+', src)[0]}.jpg"
                 result.save(outputPath)
         #result.save(outputPath)
     return highConfSigns
@@ -228,7 +229,7 @@ def GoProFrames(input_mp4, outdir, interval):
         if(timer >= interval):
             timer -= interval
 
-            pairedData.append([frames[frameNum][0], data[2], data[3]])
+            pairedData.append([frames[frameNum][0], data[2], data[3], data[4]])
             frameNum+=1
         previous = time
 

@@ -209,7 +209,7 @@ def get_gopro_timed_gps(mp4_path: str, exiftool_bin: str):
     """
     cmd = [
         exiftool_bin, "-ee3", "-api", "largefilesupport=1", "-n",
-        "-p", "$GPSDateTime $GPSLatitude $GPSLongitude",
+        "-p", "$GPSDateTime $GPSLatitude $GPSLongitude $Main:DiagonalFieldOfView",
         mp4_path
     ]
     try:
@@ -221,7 +221,7 @@ def get_gopro_timed_gps(mp4_path: str, exiftool_bin: str):
     for line in out.splitlines():
         parts = line.strip().split()
         #t   = (parts[1]); lat = (parts[2]); lon = (parts[3])
-        if(len(parts) == 4):
+        if(len(parts) == 5):
             samples.append(parts)
     #samples.sort(key=lambda x: x[0])
     return samples

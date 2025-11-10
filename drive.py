@@ -181,13 +181,11 @@ def drive_gopro(input_mp4, interval, datafile):
         use_doc_orientation_classify=False,
         use_doc_unwarping=False,
         use_textline_orientation=False)
-
     frames = GoProFrames(input_mp4, outputFolder, interval)
     #FIXME Find a way to get FOV and heading from the gopro data
     heading = 0
-    fov = 90
-    for (framesrc, lat, log) in frames:
-        locationStr = f"{log},{lat}"     
+    for (framesrc, lat, log, fov) in frames:
+        fov= float(fov)
         #Sign Detection starts here, may need to fix pathing name
         for model in os.listdir(os.path.join(os.getcwd(), "models")):
             found = detect_and_store(framesrc, f"models/{model}")

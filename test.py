@@ -21,5 +21,6 @@ interp_gap  = 15.0     # per-side seconds for interpolation
 nearest_gap = 10.0     # max seconds for nearest fallback
 
 #helper.GoProProcessing(input_mp4, outdir, interval, interp_gap, nearest_gap)
-#helper.GoProFrames(input_mp4, outdir, interval, interp_gap, nearest_gap)    
+#helper.GoProFrames(input_mp4, outdir, interval)    
 drive.drive_gopro(input_mp4, interval, datafile='tables/drive1.csv')
+#helper.get_gopro_timed_gps(input_mp4, helper.exiftool_cmd())
