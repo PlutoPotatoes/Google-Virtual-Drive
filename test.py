@@ -16,8 +16,10 @@ destination = "4884 Eagle Rock Blvd, Los Angeles, CA 90041"
 
 input_mp4   = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video/GX040300.MP4"
 outdir      = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video"
-interval    = 50      # seconds between frames
+interval    = 5      # seconds between frames
 interp_gap  = 15.0     # per-side seconds for interpolation
 nearest_gap = 10.0     # max seconds for nearest fallback
 
-helper.GoProProcessing(input_mp4, outdir, interval, interp_gap, nearest_gap)
+#helper.GoProProcessing(input_mp4, outdir, interval, interp_gap, nearest_gap)
+#helper.GoProFrames(input_mp4, outdir, interval, interp_gap, nearest_gap)    
+drive.drive_gopro(input_mp4, interval, datafile='tables/drive1.csv')

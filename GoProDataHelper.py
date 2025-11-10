@@ -38,7 +38,7 @@ def run_exiftool_timed_gps(mp4_path: str, exiftool_bin: str) -> List[Tuple[float
     """
     cmd = [
         exiftool_bin, "-ee3", "-api", "largefilesupport=1", "-n",
-        "-p", "$TimeStamp $GPSLatitude $GPSLongitude $Doc1:GPSHPositioningError",
+        "-p", "$GPSDateTime $GPSLatitude $GPSLongitude $Doc1:GPSHPositioningError",
         mp4_path
     ]
     print("pre statement")
@@ -189,3 +189,39 @@ def extract_frames_every_n_seconds(mp4_path: str, out_dir: str, interval: float 
 
 # ============================ RUN THE PIPELINE ============================ #
 
+
+def exiftool_cmd() -> Optional[str]:
+    """Resolve a usable exiftool path or return None if not found."""
+    if EXIFTOOL and os.path.exists(EXIFTOOL):
+        return EXIFTOOL
+    return shutil.which("exiftool")
+
+
+# Use this to grab gps data, regardless of other stuff
+# Map to each image based on time stamp
+# pair and pass to algorithm
+
+# ---------- GPS extraction (GoPro-aware) ----------
+def get_gopro_timed_gps(mp4_path: str, exiftool_bin: str):
+    """
+    Use -ee3 to pull GoPro GPMF timed GPS + GPSFix.
+    Returns [(time_s, lat, lon)] filtered to good fixes (GPSFix >= 2).
+    """
+    cmd = [
+        exiftool_bin, "-ee3", "-api", "largefilesupport=1", "-n",
+        "-p", "$GPSDateTime $GPSLatitude $GPSLongitude",
+        mp4_path
+    ]
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
+    except subprocess.CalledProcessError:
+        print("ERROR OR SMTH")
+        return []
+    samples = []
+    for line in out.splitlines():
+        parts = line.strip().split()
+        #t   = (parts[1]); lat = (parts[2]); lon = (parts[3])
+        if(len(parts) == 4):
+            samples.append(parts)
+    #samples.sort(key=lambda x: x[0])
+    return samples

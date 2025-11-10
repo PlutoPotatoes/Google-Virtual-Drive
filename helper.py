@@ -10,7 +10,7 @@ import cv2
 from GoProDataHelper import *
 
 
-def detect_and_store(src, modelName, locationStr = None):
+def detect_and_store(src, modelName):
     model = YOLO(modelName)
     results = model.predict(source=src, conf=0.25)
     result = results[0]
@@ -27,9 +27,8 @@ def detect_and_store(src, modelName, locationStr = None):
                 signTypes.append(signName)
                 path = os.path.join(os.getcwd(), f"images/{signName}_High_Confidence")
                 os.makedirs(path, exist_ok = True)
-                outputPath = f"{path}/{re.findall(r'streetview_frame_\d+_heading_\d+', src)[0]}.jpg"
+                outputPath = f"{path}/{src}.jpg"
                 result.save(outputPath)
-
         #result.save(outputPath)
     return highConfSigns
             
@@ -197,6 +196,7 @@ def GoProProcessing(input_mp4, outdir, interval, interp_gap, nearest_gap):
             latlon = interpolate_gps(ts, samples, per_side_gap=interp_gap) or nearest_gps(ts, samples, max_gap=nearest_gap)
         if latlon is None and static_gps is not None:
             latlon = static_gps
+            print("no timed gps")
         if latlon:
             write_gps_exif(jpg_path, latlon[0], latlon[1])
             wrote += 1
@@ -205,3 +205,31 @@ def GoProProcessing(input_mp4, outdir, interval, interp_gap, nearest_gap):
     print("Done. First few files:")
     for p, _t in frames[:5]:
         print("  ", p)
+
+
+
+def GoProFrames(input_mp4, outdir, interval):
+    exiftool_bin = exiftool_cmd()
+
+    frames = extract_frames_every_n_seconds(input_mp4, outdir, interval)
+    gpsData = get_gopro_timed_gps(input_mp4, exiftool_bin)
+
+    pairedData = []
+    frameNum = 0
+    timer = 0
+    previous = float(gpsData[0][1].split(':')[2])
+    for data in gpsData:
+        time = float(data[1].split(':')[2])
+        if(previous >= 59.0):
+            timer+= (60.0-previous) + time
+        else:
+            timer+=time-previous
+        
+        if(timer >= interval):
+            timer -= interval
+
+            pairedData.append([frames[frameNum][0], data[2], data[3]])
+            frameNum+=1
+        previous = time
+
+    return pairedData
