@@ -6,7 +6,6 @@ from google.maps import routing_v2
 import json
 from transformers import pipeline
 from helper import *
-import cv2
 from paddleocr import PaddleOCR
 
 ocrSigns = ["Tow Away Signs Letters"]
@@ -167,4 +166,34 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
 
 
 
+def drive_gopro(input_mp4, interval, datafile, ocr_candidate_signs = []):
+    #prepare images folder
 
+    outputFolder = "images/raw"
+    croppedImageFolder = "images/temp/cropped"
+    os.makedirs(outputFolder, exist_ok = True)
+    os.makedirs(croppedImageFolder, exist_ok=True)
+    #load Depth Anything v2 Model
+    depthModel = pipeline(task="depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf")
+
+    #load paddleOCR model
+    ocrModel = PaddleOCR(
+        use_doc_orientation_classify=False,
+        use_doc_unwarping=False,
+        use_textline_orientation=False)
+    frames = GoProFrames(input_mp4, outputFolder, interval)
+    #FIXME Find a way to get FOV and heading from the gopro data
+    heading = 0
+    for (framesrc, lat, log, fov) in frames:
+        fov= float(fov)
+        #Sign Detection starts here, may need to fix pathing name
+        for model in os.listdir(os.path.join(os.getcwd(), "models")):
+            found = detect_and_store(framesrc, f"models/{model}")
+            if(datafile != None):   
+                for sign, conf, shape in found:
+                    depth, newHeading = get_detection_depth_and_heading(depthModel, framesrc, shape, heading, fov)
+                    lat, lon = adjustCoords(lat, log, newHeading, depth)
+                    if sign in ocrSigns:
+                        sign = ocr(shape, sign, framesrc,
+                                f"images/temp/cropped/crop_{framesrc}", ocrModel, ocr_candidate_signs)
+                    addToGISFormatTable(datafile, sign, lat, lon, newHeading)

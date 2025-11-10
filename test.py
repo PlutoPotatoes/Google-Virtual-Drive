@@ -1,4 +1,5 @@
 import drive
+import helper
 from load_excel_and_test_ocr import load_excel
 
 with open('secrets.txt') as f:
@@ -12,7 +13,18 @@ destination = "4884 Eagle Rock Blvd, Los Angeles, CA 90041"
 unique_signs = load_excel()
 
 #Use Routes API
-drive.drive_route(origin, destination, API_KEY, minStep=30, fov = 90, datafile='tables/drive2.csv', ocr_candidate_signs=unique_signs)
+#drive.drive_route(origin, destination, API_KEY, minStep=30, fov = 90, datafile='tables/drive2.csv', ocr_candidate_signs=unique_signs)
 
 #Use CSV Coordinates
 #drive.csv_drive("GrandAv.csv", API_KEY, pitchAngle=5, fov=90, datafile='tables/drive1.csv')
+
+input_mp4   = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video/GX040300.MP4"
+outdir      = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video"
+interval    = 5      # seconds between frames
+interp_gap  = 15.0     # per-side seconds for interpolation
+nearest_gap = 10.0     # max seconds for nearest fallback
+
+#helper.GoProProcessing(input_mp4, outdir, interval, interp_gap, nearest_gap)
+#helper.GoProFrames(input_mp4, outdir, interval)    
+drive.drive_gopro(input_mp4, interval, datafile='tables/drive1.csv', ocr_candidate_signs=unique_signs)
+#helper.get_gopro_timed_gps(input_mp4, helper.exiftool_cmd())

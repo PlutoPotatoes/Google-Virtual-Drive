@@ -7,11 +7,12 @@ from PIL import Image
 from pyproj import Geod
 import json
 import cv2
+from GoProDataHelper import *
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from torchmetrics.text import CharErrorRate
 
-def detect_and_store(src, modelName, locationStr = None):
+def detect_and_store(src, modelName):
     model = YOLO(modelName)
     results = model.predict(source=src, conf=0.25)
     result = results[0]
@@ -28,9 +29,9 @@ def detect_and_store(src, modelName, locationStr = None):
                 signTypes.append(signName)
                 path = os.path.join(os.getcwd(), f"images/{signName}_High_Confidence")
                 os.makedirs(path, exist_ok = True)
-                outputPath = f"{path}/{re.findall(r'streetview_frame_\d+_heading_\d+', src)[0]}.jpg"
+                outputPath = f"{path}/{os.path.basename(src)}"
+                    #outputPath = f"{path}/{re.findall(r'streetview_frame_\d+_heading_\d+', src)[0]}.jpg"
                 result.save(outputPath)
-
         #result.save(outputPath)
     return highConfSigns
             
@@ -207,3 +208,63 @@ def specifySigns(baseSign, words, ocr_candidate_signs):
 
 def is_ocr_canditate(unique_sign):
     return unique_sign["OCR candidate?"] == "y"
+
+def GoProProcessing(input_mp4, outdir, interval, interp_gap, nearest_gap):
+
+    print("Output folder:", Path(outdir))
+    frames = extract_frames_every_n_seconds(input_mp4, outdir, interval)
+    print(f"Extracted {len(frames)} frames")
+    exiftool_bin = exiftool_cmd()
+    if not exiftool_bin:
+        print("[WARN] exiftool not found. Frames will be left without GPS EXIF.")
+        samples = []; static_gps = None
+    else:
+        print("Using exiftool:", exiftool_bin)
+        samples    = run_exiftool_timed_gps(input_mp4, exiftool_bin)
+        static_gps = run_exiftool_static_gps(input_mp4, exiftool_bin)
+        print(f"Timed GPS samples: {len(samples)} | Static GPS available: {bool(static_gps)}")
+
+    wrote = 0
+    for jpg_path, ts in frames:
+        latlon = None
+        if samples:
+            latlon = interpolate_gps(ts, samples, per_side_gap=interp_gap) or nearest_gps(ts, samples, max_gap=nearest_gap)
+        if latlon is None and static_gps is not None:
+            latlon = static_gps
+            print("no timed gps")
+        if latlon:
+            write_gps_exif(jpg_path, latlon[0], latlon[1])
+            wrote += 1
+
+    print(f"GPS EXIF written on {wrote}/{len(frames)} frames.")
+    print("Done. First few files:")
+    for p, _t in frames[:5]:
+        print("  ", p)
+
+
+
+def GoProFrames(input_mp4, outdir, interval):
+    exiftool_bin = exiftool_cmd()
+
+    frames = extract_frames_every_n_seconds(input_mp4, outdir, interval)
+    gpsData = get_gopro_timed_gps(input_mp4, exiftool_bin)
+
+    pairedData = []
+    frameNum = 0
+    timer = 0
+    previous = float(gpsData[0][1].split(':')[2])
+    for data in gpsData:
+        time = float(data[1].split(':')[2])
+        if(previous >= 59.0):
+            timer+= (60.0-previous) + time
+        else:
+            timer+=time-previous
+        
+        if(timer >= interval):
+            timer -= interval
+
+            pairedData.append([frames[frameNum][0], data[2], data[3], data[4]])
+            frameNum+=1
+        previous = time
+
+    return pairedData
