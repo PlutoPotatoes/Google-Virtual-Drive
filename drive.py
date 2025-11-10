@@ -168,24 +168,36 @@ def drive_route(origin, destination, API_KEY, minStep = 20, fov = 90, pitchAngle
 
 def drive_gopro(input_mp4, interval, datafile, ocr_candidate_signs = []):
     #prepare images folder
-
+    print("Preparing Directories")
     outputFolder = "images/raw"
     croppedImageFolder = "images/temp/cropped"
     os.makedirs(outputFolder, exist_ok = True)
     os.makedirs(croppedImageFolder, exist_ok=True)
-    #load Depth Anything v2 Model
-    depthModel = pipeline(task="depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf")
 
+    #load Depth Anything v2 Model
+    print("Loading Depth and OCR Models")
+    depthModel = pipeline(task="depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf")
     #load paddleOCR model
     ocrModel = PaddleOCR(
         use_doc_orientation_classify=False,
         use_doc_unwarping=False,
         use_textline_orientation=False)
+    
+    print("Creating Frames from GoPro Footage")
     frames = GoProFrames(input_mp4, outputFolder, interval)
-    #FIXME Find a way to get FOV and heading from the gopro data
-    heading = 0
+    #set initial heading from location 1 to 2
+    heading = calculate_bearing(float(frames[0][1]), float(frames[0][2]), float(frames[1][1]), float(frames[1][2]))
+    previousLocation = ()
+    firstFrame = True
+
+    print("Analyzing Frames")
     for (framesrc, lat, log, fov) in frames:
         fov= float(fov)
+        lat = float(lat)
+        log = float(log)
+        #if not the first picture reset bearing using previous and current location
+        if not firstFrame:
+            heading = calculate_bearing(previousLocation[0], previousLocation[1], lat, log)
         #Sign Detection starts here, may need to fix pathing name
         for model in os.listdir(os.path.join(os.getcwd(), "models")):
             found = detect_and_store(framesrc, f"models/{model}")
@@ -197,3 +209,4 @@ def drive_gopro(input_mp4, interval, datafile, ocr_candidate_signs = []):
                         sign = ocr(shape, sign, framesrc,
                                 f"images/temp/cropped/crop_{framesrc}", ocrModel, ocr_candidate_signs)
                     addToGISFormatTable(datafile, sign, lat, lon, newHeading)
+        previousLocation = (lat, log)
