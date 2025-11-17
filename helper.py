@@ -141,7 +141,6 @@ def adjustCoords(lat, lon, bearing, depth):
     return lat, lon
 
 def ocr(boxCoords, signName, src, crop_path, ocr, ocr_candidate_signs):
-    newSignType = signName
     x1, y1, x2, y2 = boxCoords
     crop_img = cv2.imread(src)[int(y1):int(y2), int(x1):int(x2)]
     # Save cropped image
@@ -161,20 +160,9 @@ def ocr(boxCoords, signName, src, crop_path, ocr, ocr_candidate_signs):
     
     return lowest_cer
 
-'''
-def specifySigns(baseSign, words):
-    signName = baseSign
-    match(baseSign):
-        case "Tow Away Signs Letters":
-            print("Tow Away of some kind")
-            #try to match all word in words to sign keywords
-        case _:
-            print("unidentified sign")
-    return signName
-'''
-
 def load_excel():
     # Define the scope of API
+    print("Loading sign information from Google Sheet")
     scope = [
         'https://www.googleapis.com/auth/spreadsheets',
         'https://www.googleapis.com/auth/drive'
@@ -192,6 +180,7 @@ def load_excel():
 def specifySigns(baseSign, words, ocr_candidate_signs):
     cer = CharErrorRate()
     cers = {}
+    if (len(words) == 0): return "", {}
     prediction = " ".join(words)
     lowest_cer = ""
     # for each sign type
@@ -201,7 +190,7 @@ def specifySigns(baseSign, words, ocr_candidate_signs):
             # calculate CER
             cer_val = cer(prediction, ocr_desc).item() / len(ocr_desc)
             if (len(cers) == 0 or (lowest_cer != "" and cer_val < cers[lowest_cer])):
-                lowest_cer = ocr_desc
+                lowest_cer = ocr_candidate_sign["Sign-Type"]
             cers[ocr_desc] = cer_val
 
     return lowest_cer, cers
