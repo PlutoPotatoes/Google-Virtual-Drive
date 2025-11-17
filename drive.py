@@ -8,7 +8,7 @@ from transformers import pipeline
 from helper import *
 from paddleocr import PaddleOCR
 
-ocrSigns = ["Tow Away Signs Letters"]
+ocrSigns = ["Tow Away Signs Letters", "Hourly Parking Sign"]
 
 
 def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None, ocr_candidate_signs = []):

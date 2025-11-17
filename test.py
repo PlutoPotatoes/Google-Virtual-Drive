@@ -10,7 +10,8 @@ origin = "100 Main St 10th Floor, Los Angeles, CA 90012"
 destination = "4884 Eagle Rock Blvd, Los Angeles, CA 90041"
 
 # load the signs
-unique_signs = load_excel()
+unique_signs = filter(helper.is_ocr_canditate, load_excel())
+print("Retrieved OCR candidate sign information")
 
 #Use Routes API
 #drive.drive_route(origin, destination, API_KEY, minStep=30, fov = 90, datafile='tables/drive2.csv', ocr_candidate_signs=unique_signs)
@@ -18,8 +19,8 @@ unique_signs = load_excel()
 #Use CSV Coordinates
 #drive.csv_drive("GrandAv.csv", API_KEY, pitchAngle=5, fov=90, datafile='tables/drive1.csv')
 
-input_mp4   = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video/GX040300.MP4"
-outdir      = "C:/Users/ryanm/LADOT/Google Maps Drive Test/video"
+input_mp4   = "/Users/serenali/ahahahhaahaha/ladot/Google-Virtual-Drive/video/GX040300.MP4"
+outdir      = "/Users/serenali/ahahahhaahaha/ladot/Google-Virtual-Drive/video"
 interval    = 5      # seconds between frames
 interp_gap  = 15.0     # per-side seconds for interpolation
 nearest_gap = 10.0     # max seconds for nearest fallback
