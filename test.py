@@ -10,7 +10,7 @@ origin = "100 Main St 10th Floor, Los Angeles, CA 90012"
 destination = "4884 Eagle Rock Blvd, Los Angeles, CA 90041"
 
 # load the signs
-unique_signs = filter(helper.is_ocr_canditate, load_excel())
+unique_signs = list(filter(helper.is_ocr_canditate, load_excel()))
 print("Retrieved OCR candidate sign information")
 
 #Use Routes API

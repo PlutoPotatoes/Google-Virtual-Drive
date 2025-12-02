@@ -21,7 +21,7 @@ def detect_and_store(src, modelName):
     for box in result.boxes:
         signName = result.names[int(box.cls)]
         #path = os.path.join(os.getcwd(), f"images/{signName}_Low_Confidence")
-        if box.conf.item() >= 0.8:
+        if box.conf.item() >= 0.4: # lowered the confidence threashold
             #track all signs
             highConfSigns.append([signName, box.conf.item(), box.xyxy.tolist()[0]])
             #save one image per sign type
@@ -155,8 +155,8 @@ def ocr(boxCoords, signName, src, crop_path, ocr, ocr_candidate_signs):
             # it may be worth pairing words with their confidence level
             words = j['rec_texts']
     lowest_cer, cers = specifySigns(signName, words, ocr_candidate_signs)
-    os.remove("images/temp/jsons/sign_name_data.json")
-    os.remove(crop_path)
+    # os.remove("images/temp/jsons/sign_name_data.json")
+    # os.remove(crop_path)
     
     return lowest_cer
 
@@ -181,16 +181,16 @@ def specifySigns(baseSign, words, ocr_candidate_signs):
     cer = CharErrorRate()
     cers = {}
     if (len(words) == 0): return "", {}
-    prediction = " ".join(words)
+    prediction = " ".join(words).capitalize()
     lowest_cer = ""
     # for each sign type
     for ocr_candidate_sign in ocr_candidate_signs:
         if (ocr_candidate_sign["Bounding box name"] == baseSign):
-            ocr_desc = " ".join(ocr_candidate_sign["OCR Desc"].split('\n'))
-            # calculate CER
-            cer_val = cer(prediction, ocr_desc).item() / len(ocr_desc)
+            ocr_desc = " ".join(ocr_candidate_sign["OCR Desc"].split('\n')).capitalize()
+            # calculate CER (without normalizing to len(ocr_desc))
+            cer_val = cer(prediction, ocr_desc).item()
             if (len(cers) == 0 or (lowest_cer != "" and cer_val < cers[lowest_cer])):
-                lowest_cer = ocr_candidate_sign["Sign-Type"]
+                lowest_cer = ocr_desc
             cers[ocr_desc] = cer_val
 
     return lowest_cer, cers
