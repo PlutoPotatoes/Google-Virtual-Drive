@@ -8,7 +8,7 @@ from transformers import pipeline
 from helper import *
 from paddleocr import PaddleOCR
 
-ocrSigns = ["Tow Away Signs Letters"]
+ocrSigns = ["Tow Away Signs Letters", "Hourly Parking Sign"]
 
 
 def csv_drive(filename, API_KEY, fov = 90, pitchAngle=0, datafile = None, ocr_candidate_signs = []):
@@ -191,6 +191,7 @@ def drive_gopro(input_mp4, interval, datafile, ocr_candidate_signs = []):
     firstFrame = True
 
     print("Analyzing Frames")
+    print(f"OCR signs are: {ocr_candidate_signs}")
     for (framesrc, lat, log, fov) in frames:
         fov= float(fov)
         lat = float(lat)
@@ -205,8 +206,10 @@ def drive_gopro(input_mp4, interval, datafile, ocr_candidate_signs = []):
                 for sign, conf, shape in found:
                     depth, newHeading = get_detection_depth_and_heading(depthModel, framesrc, shape, heading, fov)
                     lat, lon = adjustCoords(lat, log, newHeading, depth)
+                    print(f"Adding {sign} at ({lat}, {lon}) to {datafile} table!")
                     if sign in ocrSigns:
                         sign = ocr(shape, sign, framesrc,
                                 f"images/temp/cropped/crop_{framesrc}", ocrModel, ocr_candidate_signs)
+                    print(f"The new sign after OCR is {sign}!")
                     addToGISFormatTable(datafile, sign, lat, lon, newHeading)
         previousLocation = (lat, log)

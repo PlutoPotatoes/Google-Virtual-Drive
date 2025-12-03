@@ -26,6 +26,9 @@ For all Implementations the following are also required
 -> oauth2client
 -> torchmetrics
 
+`pip install googlemaps polyline google-maps-routing requests haversine ultralytics gspread oauth2client torchmetrics transformers numpy paddleocr piexif pyproj paddlepaddle`
+Also download Exiftool and replace the path in the `GoProDataHelper.py` `EXIFTOOL` constant to where you saved the executable file on your device.
+
 Setup:
 
 1. Create a virtual Python environment and run `pip install -r requirements.txt` in terminal to install all the libraries/packages this project depends on.

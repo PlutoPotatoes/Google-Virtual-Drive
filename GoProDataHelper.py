@@ -16,7 +16,8 @@ import piexif
 #interval    = 5.0      # seconds between frames
 #interp_gap  = 15.0     # per-side seconds for interpolation
 #nearest_gap = 10.0     # max seconds for nearest fallback
-EXIFTOOL    = "exiftool-13.40_64/exiftool.exe"  # set to None if exiftool is on PATH
+# EXIFTOOL    = "exiftool-13.40_64/exiftool.exe" 
+EXIFTOOL    = "/usr/local/bin/exiftool.exe"  # set to None if exiftool is on PATH
 # --------------------------------------------------------------------- #
 
 def exiftool_cmd() -> Optional[str]:

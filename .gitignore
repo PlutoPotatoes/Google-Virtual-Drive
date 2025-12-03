@@ -4,10 +4,10 @@ credentials.json
 .DS_Store
 **/__pycache__/
 /bin
-/images
-/tables
+/images/*
+/tables/*
 *.csv
 /obj
-/video
+/video/*
 /old_models
 /exiftool-13.40_64
